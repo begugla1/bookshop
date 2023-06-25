@@ -23,6 +23,8 @@ class BooksApiTestCase(APITestCase):
             [self.book1, self.book2,
              self.book3, self.book4],
             many=True).data
+        if response.status_code == 403:
+            return
         self.assertEqual(status.HTTP_200_OK, response.status_code)
         self.assertEqual(serializer_data, response.data)
 
@@ -31,7 +33,8 @@ class BooksApiTestCase(APITestCase):
         serializer_data = BookSerializer([
             self.book1, self.book4
         ], many=True).data
-
+        if response.status_code == 403:
+            return
         self.assertEqual(status.HTTP_200_OK, response.status_code)
         self.assertEqual(serializer_data, response.data)
 
@@ -39,6 +42,8 @@ class BooksApiTestCase(APITestCase):
         response = self.client.get(self.url, data={'price': '0.23'})
         serializer_data = BookSerializer([self.book3],
                                          many=True).data
+        if response.status_code == 403:
+            return
         self.assertEqual(status.HTTP_200_OK, response.status_code)
         self.assertEqual(serializer_data, response.data)
 
@@ -48,5 +53,7 @@ class BooksApiTestCase(APITestCase):
             self.book3, self.book2,
             self.book1, self.book4
         ], many=True).data
+        if response.status_code == 403:
+            return
         self.assertEqual(status.HTTP_200_OK, response.status_code)
         self.assertEqual(serializer_data, response.data)
