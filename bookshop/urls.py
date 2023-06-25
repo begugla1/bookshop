@@ -18,14 +18,15 @@ from django.contrib import admin
 from django.urls import path, include
 
 from bookshop import settings
+from store.views import Auth
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('book/', include('store.urls')),
+    path('auth/', Auth.as_view()),
+    path('', include('social_django.urls', namespace='social')),
 ]
 
 if settings.DEBUG:
-    urlpatterns = [
-        path('__debug__/', include('debug_toolbar.urls')),
-    ] + urlpatterns
+    urlpatterns += [path('__debug__/', include('debug_toolbar.urls'))]
 
