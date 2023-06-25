@@ -15,17 +15,17 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
-from rest_framework.routers import SimpleRouter
+from django.urls import path, include
 
-from store.views import BookViewSet
-
-router = SimpleRouter()
-
-router.register(r'book', BookViewSet)
+from bookshop import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('book/', include('store.urls')),
 ]
 
-urlpatterns += router.urls
+if settings.DEBUG:
+    urlpatterns = [
+        path('__debug__/', include('debug_toolbar.urls')),
+    ] + urlpatterns
+
