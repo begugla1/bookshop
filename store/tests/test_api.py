@@ -13,8 +13,12 @@ from store.serializers import BookSerializer
 class BooksApiTestCase(APITestCase):
 
     def setUp(self):
-        self.test_user = User.objects.create(username="test_username", password="test_password")
-        self.book1 = Book.objects.create(name='Testbook1 John', price='111.34')
+        self.test_user = User.objects.create(username="test_username")
+        self.test_user2 = User.objects.create(username='test_username2')
+        self.test_user3 = User.objects.create(username="test_username3",
+                                             is_staff=True)
+        self.book1 = Book.objects.create(name='Testbook1 John', price='111.34',
+                                         owner=self.test_user)
         self.book2 = Book.objects.create(name='Testbook2', price='111.00')
         self.book3 = Book.objects.create(name='Testbook3', price='0.23',
                                          author='Mike')
@@ -70,6 +74,36 @@ class BooksApiTestCase(APITestCase):
 
         self.assertEqual(status.HTTP_201_CREATED, response.status_code)
         self.assertEqual(5, Book.objects.all().count())
+        self.assertEqual(self.test_user, Book.objects.last().owner)
+
+    def test_delete(self):
+        url = reverse_lazy('book-detail', args=(self.book1.id,))
+        self.assertEqual(4, Book.objects.all().count())
+        self.client.force_login(self.test_user)
+        response = self.client.delete(url)
+        self.assertEqual(status.HTTP_204_NO_CONTENT, response.status_code)
+        self.assertEqual(3, Book.objects.all().count())
+
+    def test_delete_not_owner(self):
+        url = reverse_lazy('book-detail', args=(self.book1.id,))
+        self.assertEqual(4, Book.objects.all().count())
+        self.client.force_login(self.test_user2)
+        response = self.client.delete(url)
+        self.assertEqual(status.HTTP_403_FORBIDDEN, response.status_code)
+        self.assertEqual(4, Book.objects.all().count())
+
+    def test_get_detail(self):
+        url = reverse_lazy('book-detail', args=(self.book1.id,))
+        json_data = {
+            "id": self.book1.id,
+            "name": self.book1.name,
+            "price": self.book1.price,
+            "author": self.book1.author,
+            "owner": self.book1.owner.id
+        }
+        response = self.client.get(url)
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.assertEqual(json_data, response.data)
 
     def test_update(self):
         url = reverse_lazy('book-detail', args=(self.book1.id,))
@@ -90,22 +124,36 @@ class BooksApiTestCase(APITestCase):
         self.book1.refresh_from_db()
         self.assertEqual(Decimal(990000), self.book1.price)
 
-    def test_delete(self):
+    def test_update_not_owner(self):
         url = reverse_lazy('book-detail', args=(self.book1.id,))
         self.assertEqual(4, Book.objects.all().count())
-        self.client.force_login(self.test_user)
-        response = self.client.delete(url)
-        self.assertEqual(204, response.status_code)
-        self.assertEqual(3, Book.objects.all().count())
-
-    def test_get_detail(self):
-        url = reverse_lazy('book-detail', args=(self.book1.id,))
-        json_data = {
-            "id": self.book1.id,
+        data = {
             "name": self.book1.name,
-            "price": self.book1.price,
+            "price": 990000,
             "author": self.book1.author
         }
-        response = self.client.get(url)
+        json_data = json.dumps(data)
+        self.client.force_login(self.test_user2)
+        response = self.client.put(url,
+                                   data=json_data,
+                                   content_type="application/json")
+        self.assertEqual(status.HTTP_403_FORBIDDEN, response.status_code)
+        self.book1.refresh_from_db()
+        self.assertEqual(Decimal('111.34'), self.book1.price)
+
+    def test_update_not_owner_but_staff(self):
+        url = reverse_lazy('book-detail', args=(self.book1.id,))
+        self.assertEqual(4, Book.objects.all().count())
+        data = {
+            "name": self.book1.name,
+            "price": 990000,
+            "author": self.book1.author
+        }
+        json_data = json.dumps(data)
+        self.client.force_login(self.test_user3)
+        response = self.client.put(url,
+                                   data=json_data,
+                                   content_type="application/json")
         self.assertEqual(status.HTTP_200_OK, response.status_code)
-        self.assertEqual(json_data, response.data)
+        self.book1.refresh_from_db()
+        self.assertEqual(990000, self.book1.price)
