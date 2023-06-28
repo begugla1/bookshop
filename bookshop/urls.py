@@ -16,16 +16,26 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from rest_framework.routers import SimpleRouter
+
 
 from bookshop import settings
-from store.views import Auth
+from store.views import *
+
+
+router = SimpleRouter()
+
+router.register(r'book', BookViewSet)
+router.register(r'book_relation', UserBookRelationView)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('book/', include('store.urls')),
     path('auth/', Auth.as_view()),
     path('', include('social_django.urls', namespace='social')),
 ]
+
+urlpatterns += router.urls
+
 
 if settings.DEBUG:
     urlpatterns += [path('__debug__/', include('debug_toolbar.urls'))]
