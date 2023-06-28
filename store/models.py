@@ -34,6 +34,7 @@ class UserBookRelation(models.Model):
     in_bookmarks = models.BooleanField('In bookmarks', default=False)
     rate = models.PositiveSmallIntegerField('Rate', choices=RATE_CHOICES,
                                             null=True)
+    review = models.TextField('Review', null=True)
 
     def __str__(self):
         return f'Relation of {self.user} to {self.book}'

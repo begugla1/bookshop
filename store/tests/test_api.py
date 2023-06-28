@@ -218,3 +218,19 @@ class BooksRelationTestCase(ApiStoreTestsMixin, APITestCase):
         relation = UserBookRelation.objects.get(user=self.test_user,
                                                 book=self.book1)
         self.assertEqual(None, relation.rate)
+
+    def test_review(self):
+        self.url = reverse_lazy('userbookrelation-detail', args=(self.book1.id,))
+
+        data = {
+            "review": 'It\'s a very good book!'
+        }
+        json_data = json.dumps(data)
+
+        self.client.force_login(self.test_user)
+        response = self.client.patch(self.url, data=json_data,
+                                     content_type='application/json')
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        relation = UserBookRelation.objects.get(user=self.test_user,
+                                                book=self.book1)
+        self.assertEqual(data['review'], relation.review)
