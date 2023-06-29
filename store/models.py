@@ -1,5 +1,8 @@
 from django.contrib.auth.models import User
 from django.db import models
+from decimal import Decimal
+
+from store.validators import discount_validator
 
 
 class Book(models.Model):
@@ -8,10 +11,12 @@ class Book(models.Model):
     author = models.CharField('Author', max_length=255, default='Unknown')
     owner = models.ForeignKey(User, on_delete=models.SET_NULL,
                               null=True, verbose_name="Owner",
-                              related_name='my_books')
+                              related_name='my_books', blank=True)
     readers = models.ManyToManyField(User, through='UserBookRelation',
                                      verbose_name='Readers',
                                      related_name='books')
+    discount = models.DecimalField('Discount', max_digits=3, decimal_places=2,
+                                   default=Decimal(0), validators=[discount_validator])
 
     def __str__(self):
         return self.name

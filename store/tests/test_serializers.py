@@ -1,5 +1,5 @@
 from django.contrib.auth.models import User
-from django.db.models import Count, Case, When, Avg
+from django.db.models import Count, Case, When, Avg, F, ExpressionWrapper, FloatField
 from django_filters.compat import TestCase
 
 from store.models import Book, UserBookRelation
@@ -9,12 +9,14 @@ from store.serializers import BookSerializer
 class BookSerializerTestCase(TestCase):
 
     def test_ok(self):
-        user1 = User.objects.create(username='test_usdeddr1')
-        user2 = User.objects.create(username='test_usddedr2')
-        user3 = User.objects.create(username='test_usddedr3')
+        user1 = User.objects.create(username='test_username1')
+        user2 = User.objects.create(username='test_username2')
+        user3 = User.objects.create(username='test_username3')
 
-        book1 = Book.objects.create(name='Testbook1', price='111.34')
-        book2 = Book.objects.create(name='Testbook2', price='111.000')
+        book1 = Book.objects.create(name='Testbook1', price='111.34',
+                                    discount=0)
+        book2 = Book.objects.create(name='Testbook2', price='111.000',
+                                    discount=0.5)
 
         UserBookRelation.objects.create(user=user1, book=book1,
                                         like=True, rate=5)
@@ -32,7 +34,10 @@ class BookSerializerTestCase(TestCase):
 
         books = Book.objects.all().annotate(
             annotated_likes=Count(Case(When(userbookrelation__like=True, then=1))),
-            rating=Avg('userbookrelation__rate')) \
+            rating=Avg('userbookrelation__rate'),
+            price_with_discount=ExpressionWrapper(
+                F('price') - (F('price') * F('discount')),
+                output_field=FloatField())) \
             .order_by('id')
         data = BookSerializer(books, many=True).data
 
@@ -43,7 +48,9 @@ class BookSerializerTestCase(TestCase):
                 'author': 'Unknown',
                 'likes_count': 2,
                 'annotated_likes': 2,
-                'rating': '4.67'
+                'rating': '4.67',
+                'price_with_discount': '111.34'
+
             },
             {
                 'name': book2.name,
@@ -51,7 +58,8 @@ class BookSerializerTestCase(TestCase):
                 'author': 'Unknown',
                 'likes_count': 1,
                 'annotated_likes': 1,
-                'rating': '3.50'
+                'rating': '3.50',
+                'price_with_discount': '55.50'
             },
         ]
         self.assertEqual(expected_data, data)

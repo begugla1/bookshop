@@ -11,7 +11,7 @@ class ApiStoreTestsMixin:
         self.test_user3 = User.objects.create(username="test_username3",
                                               is_staff=True)
         self.book1 = Book.objects.create(name='Testbook1 John', price='111.34',
-                                         owner=self.test_user)
+                                         owner=self.test_user, discount=0.37)
         self.book2 = Book.objects.create(name='Testbook2', price='111.00')
         self.book3 = Book.objects.create(name='Testbook3', price='0.23',
                                          author='Mike')

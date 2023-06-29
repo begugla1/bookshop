@@ -1,7 +1,7 @@
 import json
 from decimal import Decimal
 
-from django.db.models import Count, Case, When, Avg
+from django.db.models import Count, Case, When, Avg, ExpressionWrapper, F, FloatField
 from django.urls import reverse_lazy
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -17,7 +17,10 @@ class BooksApiTestCase(ApiStoreTestsMixin, APITestCase):
         response = self.client.get(self.url)
         books = Book.objects.all().annotate(
             annotated_likes=Count(Case(When(userbookrelation__like=True, then=1))),
-            rating=Avg('userbookrelation__rate')) \
+            rating=Avg('userbookrelation__rate'),
+            price_with_discount=ExpressionWrapper(
+                F('price') - (F('price') * F('discount')),
+                output_field=FloatField())) \
             .order_by('id')
         serializer_data = BookSerializer(books, many=True).data
         self.assertEqual(status.HTTP_200_OK, response.status_code)
@@ -25,12 +28,16 @@ class BooksApiTestCase(ApiStoreTestsMixin, APITestCase):
         self.assertEqual(serializer_data[0]['rating'], '5.00')
         self.assertEqual(serializer_data[0]['annotated_likes'], 1)
         self.assertEqual(serializer_data[0]['likes_count'], 1)
+        self.assertEqual(serializer_data[0]['price_with_discount'], '70.14')
 
     def test_get_search(self):
         response = self.client.get(self.url, data={'search': 'John'})
         books = Book.objects.filter(id__in=[self.book1.id, self.book4.id]).annotate(
             annotated_likes=Count(Case(When(userbookrelation__like=True, then=1))),
-            rating=Avg('userbookrelation__rate')) \
+            rating=Avg('userbookrelation__rate'),
+            price_with_discount=ExpressionWrapper(
+                F('price') - (F('price') * F('discount')),
+                output_field=FloatField())) \
             .order_by('id')
         serializer_data = BookSerializer(books, many=True).data
         self.assertEqual(status.HTTP_200_OK, response.status_code)
@@ -40,7 +47,11 @@ class BooksApiTestCase(ApiStoreTestsMixin, APITestCase):
         response = self.client.get(self.url, data={'price': '0.23'})
         books = Book.objects.filter(id__in=[self.book3.id]).annotate(
             annotated_likes=Count(Case(When(userbookrelation__like=True, then=1))),
-            rating=Avg('userbookrelation__rate'))
+            rating=Avg('userbookrelation__rate'),
+            price_with_discount=ExpressionWrapper(
+                F('price') - (F('price') * F('discount')),
+                output_field=FloatField())) \
+            .order_by('id')
         serializer_data = BookSerializer(books, many=True).data
         self.assertEqual(status.HTTP_200_OK, response.status_code)
         self.assertEqual(serializer_data, response.data)
@@ -49,7 +60,10 @@ class BooksApiTestCase(ApiStoreTestsMixin, APITestCase):
         response = self.client.get(self.url, data={'ordering': 'price'})
         books = Book.objects.all().annotate(
             annotated_likes=Count(Case(When(userbookrelation__like=True, then=1))),
-            rating=Avg('userbookrelation__rate')) \
+            rating=Avg('userbookrelation__rate'),
+            price_with_discount=ExpressionWrapper(
+                F('price') - (F('price') * F('discount')),
+                output_field=FloatField())) \
             .order_by('price')
         serializer_data = BookSerializer(books, many=True).data
         self.assertEqual(status.HTTP_200_OK, response.status_code)
@@ -99,7 +113,8 @@ class BooksApiTestCase(ApiStoreTestsMixin, APITestCase):
             "author": self.book1.author,
             "likes_count": 1,
             "annotated_likes": 1,
-            "rating": "5.00"
+            "rating": "5.00",
+            "price_with_discount": '70.14'
         }
         response = self.client.get(url)
         self.assertEqual(status.HTTP_200_OK, response.status_code)
@@ -110,11 +125,7 @@ class BooksApiTestCase(ApiStoreTestsMixin, APITestCase):
         self.assertEqual(4, Book.objects.all().count())
         data = {
             "name": self.book1.name,
-            "price": 990000,
-            "author": self.book1.author,
-            "likes_count": 0,
-            "annotated_likes": 0,
-            "rating": None
+            "price": 990000
         }
         json_data = json.dumps(data)
         self.client.force_login(self.test_user)
@@ -122,7 +133,8 @@ class BooksApiTestCase(ApiStoreTestsMixin, APITestCase):
                                    data=json_data,
                                    content_type="application/json")
 
-        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.assertEqual(status.HTTP_200_OK, response.status_code,
+                         response.data)
         self.assertEqual(4, Book.objects.all().count())
         self.book1.refresh_from_db()
         self.assertEqual(Decimal(990000), self.book1.price)
