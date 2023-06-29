@@ -85,8 +85,7 @@ class BooksApiTestCase(ApiStoreTestsMixin, APITestCase):
             "name": self.book1.name,
             "price": self.book1.price,
             "author": self.book1.author,
-            "owner": self.book1.owner.id,
-            "readers": []
+            "likes_count": 0
         }
         response = self.client.get(url)
         self.assertEqual(status.HTTP_200_OK, response.status_code)
