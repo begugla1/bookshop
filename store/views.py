@@ -14,16 +14,12 @@ from store.serializers import BookSerializer, UserBookRelationSerializer
 
 class BookViewSet(ModelViewSet):
     queryset = Book.objects.all().annotate(
-        annotated_likes=
-        Count(Case(When(userbookrelation__like=True, then=1))),
+        annotated_likes=Count(Case(When(userbookrelation__like=True, then=1))),
         rating=Avg('userbookrelation__rate'),
-        price_with_discount=ExpressionWrapper(
-            F('price') - (F('price') * F('discount')),
-            output_field=FloatField()),
-        owner_name=F('owner__username')) \
-        .prefetch_related(Prefetch('readers',
-                                   queryset=User.objects.all() \
-                                   .only('first_name', 'last_name'))) \
+        price_with_discount=ExpressionWrapper(F('price') - (F('price') * F('discount')),
+                                              output_field=FloatField()),
+        owner_name=F('owner__username')).prefetch_related(
+        Prefetch('readers', queryset=User.objects.all().only('first_name', 'last_name'))) \
         .order_by('id')
 
     serializer_class = BookSerializer

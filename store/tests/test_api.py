@@ -24,14 +24,12 @@ class BooksApiTestCase(ApiStoreTestsMixin, APITestCase):
         books = Book.objects.all().annotate(
             annotated_likes=Count(Case(When(userbookrelation__like=True, then=1))),
             rating=Avg('userbookrelation__rate'),
-            price_with_discount=ExpressionWrapper(
-                F('price') - (F('price') * F('discount')),
-                output_field=FloatField()),
-            owner_name=F('owner__username')) \
-            .prefetch_related(Prefetch('readers',
-                                       queryset=User.objects.all() \
-                                       .only('first_name', 'last_name'))) \
+            price_with_discount=ExpressionWrapper(F('price') - (F('price') * F('discount')),
+                                                  output_field=FloatField()),
+            owner_name=F('owner__username')).prefetch_related(
+            Prefetch('readers', queryset=User.objects.all().only('first_name', 'last_name'))) \
             .order_by('id')
+
         serializer_data = BookSerializer(books, many=True).data
 
         self.assertEqual(status.HTTP_200_OK, response.status_code)
@@ -45,14 +43,12 @@ class BooksApiTestCase(ApiStoreTestsMixin, APITestCase):
         books = Book.objects.filter(id__in=[self.book1.id, self.book4.id]).annotate(
             annotated_likes=Count(Case(When(userbookrelation__like=True, then=1))),
             rating=Avg('userbookrelation__rate'),
-            price_with_discount=ExpressionWrapper(
-                F('price') - (F('price') * F('discount')),
-                output_field=FloatField()),
-            owner_name=F('owner__username')) \
-            .prefetch_related(Prefetch('readers',
-                                       queryset=User.objects.all() \
-                                       .only('first_name', 'last_name'))) \
+            price_with_discount=ExpressionWrapper(F('price') - (F('price') * F('discount')),
+                                                  output_field=FloatField()),
+            owner_name=F('owner__username')).prefetch_related(
+            Prefetch('readers', queryset=User.objects.all().only('first_name', 'last_name'))) \
             .order_by('id')
+
         serializer_data = BookSerializer(books, many=True).data
         self.assertEqual(status.HTTP_200_OK, response.status_code)
         self.assertEqual(serializer_data, response.data)
@@ -62,14 +58,12 @@ class BooksApiTestCase(ApiStoreTestsMixin, APITestCase):
         books = Book.objects.filter(id__in=[self.book3.id]).annotate(
             annotated_likes=Count(Case(When(userbookrelation__like=True, then=1))),
             rating=Avg('userbookrelation__rate'),
-            price_with_discount=ExpressionWrapper(
-                F('price') - (F('price') * F('discount')),
-                output_field=FloatField()),
-            owner_name=F('owner__username')) \
-            .prefetch_related(Prefetch('readers',
-                                       queryset=User.objects.all() \
-                                       .only('first_name', 'last_name'))) \
+            price_with_discount=ExpressionWrapper(F('price') - (F('price') * F('discount')),
+                                                  output_field=FloatField()),
+            owner_name=F('owner__username')).prefetch_related(
+            Prefetch('readers', queryset=User.objects.all().only('first_name', 'last_name'))) \
             .order_by('id')
+
         serializer_data = BookSerializer(books, many=True).data
         self.assertEqual(status.HTTP_200_OK, response.status_code)
         self.assertEqual(serializer_data, response.data)
@@ -79,14 +73,12 @@ class BooksApiTestCase(ApiStoreTestsMixin, APITestCase):
         books = Book.objects.all().annotate(
             annotated_likes=Count(Case(When(userbookrelation__like=True, then=1))),
             rating=Avg('userbookrelation__rate'),
-            price_with_discount=ExpressionWrapper(
-                F('price') - (F('price') * F('discount')),
-                output_field=FloatField()),
-            owner_name=F('owner__username')) \
-            .prefetch_related(Prefetch('readers',
-                                       queryset=User.objects.all() \
-                                       .only('first_name', 'last_name'))) \
+            price_with_discount=ExpressionWrapper(F('price') - (F('price') * F('discount')),
+                                                  output_field=FloatField()),
+            owner_name=F('owner__username')).prefetch_related(
+            Prefetch('readers', queryset=User.objects.all().only('first_name', 'last_name'))) \
             .order_by('price')
+
         serializer_data = BookSerializer(books, many=True).data
         self.assertEqual(status.HTTP_200_OK, response.status_code)
         self.assertEqual(serializer_data, response.data)
