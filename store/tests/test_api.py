@@ -16,7 +16,6 @@ from .tests_mixins import ApiStoreTestsMixin
 class BooksApiTestCase(ApiStoreTestsMixin, APITestCase):
 
     def test_get(self):
-
         with CaptureQueriesContext(connection) as queries:
             response = self.client.get(self.url)
             self.assertEqual(2, len(queries))
@@ -26,7 +25,9 @@ class BooksApiTestCase(ApiStoreTestsMixin, APITestCase):
             rating=Avg('userbookrelation__rate'),
             price_with_discount=ExpressionWrapper(
                 F('price') - (F('price') * F('discount')),
-                output_field=FloatField())) \
+                output_field=FloatField()),
+            owner_name=F('owner__username')) \
+            .prefetch_related('readers') \
             .order_by('id')
         serializer_data = BookSerializer(books, many=True).data
 
@@ -43,7 +44,9 @@ class BooksApiTestCase(ApiStoreTestsMixin, APITestCase):
             rating=Avg('userbookrelation__rate'),
             price_with_discount=ExpressionWrapper(
                 F('price') - (F('price') * F('discount')),
-                output_field=FloatField())) \
+                output_field=FloatField()),
+            owner_name=F('owner__username')) \
+            .prefetch_related('readers') \
             .order_by('id')
         serializer_data = BookSerializer(books, many=True).data
         self.assertEqual(status.HTTP_200_OK, response.status_code)
@@ -56,7 +59,9 @@ class BooksApiTestCase(ApiStoreTestsMixin, APITestCase):
             rating=Avg('userbookrelation__rate'),
             price_with_discount=ExpressionWrapper(
                 F('price') - (F('price') * F('discount')),
-                output_field=FloatField())) \
+                output_field=FloatField()),
+            owner_name=F('owner__username')) \
+            .prefetch_related('readers') \
             .order_by('id')
         serializer_data = BookSerializer(books, many=True).data
         self.assertEqual(status.HTTP_200_OK, response.status_code)
@@ -69,7 +74,9 @@ class BooksApiTestCase(ApiStoreTestsMixin, APITestCase):
             rating=Avg('userbookrelation__rate'),
             price_with_discount=ExpressionWrapper(
                 F('price') - (F('price') * F('discount')),
-                output_field=FloatField())) \
+                output_field=FloatField()),
+            owner_name=F('owner__username')) \
+            .prefetch_related('readers') \
             .order_by('price')
         serializer_data = BookSerializer(books, many=True).data
         self.assertEqual(status.HTTP_200_OK, response.status_code)
@@ -82,8 +89,7 @@ class BooksApiTestCase(ApiStoreTestsMixin, APITestCase):
             "price": "123.12",
             "author": "Shaggy",
             "likes_count": 0,
-            "annotated_likes": 0,
-            "rating": None
+            "annotated_likes": 0
         }
         json_data = json.dumps(data)
         self.client.force_login(self.test_user)

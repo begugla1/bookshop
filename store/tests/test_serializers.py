@@ -33,13 +33,16 @@ class BookSerializerTestCase(TestCase):
         UserBookRelation.objects.create(user=user3, book=book2,
                                         like=True)
 
-        books = Book.objects.all().annotate(
-            annotated_likes=Count(Case(When(userbookrelation__like=True, then=1))),
-            rating=Avg('userbookrelation__rate'),
-            price_with_discount=ExpressionWrapper(
-                F('price') - (F('price') * F('discount')),
-                output_field=FloatField())) \
+        books = Book.objects.all() \
+            .annotate(annotated_likes=Count(Case(When(userbookrelation__like=True, then=1))),
+                      rating=Avg('userbookrelation__rate'),
+                      price_with_discount=ExpressionWrapper(
+                          F('price') - (F('price') * F('discount')),
+                          output_field=FloatField()),
+                      owner_name=F('owner__username')) \
+            .prefetch_related('readers') \
             .order_by('id')
+
         data = BookSerializer(books, many=True).data
 
         expected_data = [
@@ -73,7 +76,7 @@ class BookSerializerTestCase(TestCase):
                 'annotated_likes': 1,
                 'rating': '3.50',
                 'price_with_discount': '55.50',
-                'owner_name': '',
+                'owner_name': None,
                 'readers': [
                     {
                         'first_name': 'Igor',
