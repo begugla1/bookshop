@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from django.urls import reverse_lazy
 
-from store.models import Book
+from store.models import Book, UserBookRelation
 
 
 class ApiStoreTestsMixin:
@@ -17,4 +17,6 @@ class ApiStoreTestsMixin:
                                          author='Mike')
         self.book4 = Book.objects.create(name='Testbook4', price='111213.00',
                                          author='John')
+        UserBookRelation.objects.create(user=self.test_user, book=self.book1,
+                                        like=True, rate=5)
         self.url = reverse_lazy('book-list')

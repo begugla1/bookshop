@@ -1,6 +1,7 @@
 import json
 from decimal import Decimal
 
+from django.db.models import Count, Case, When, Avg
 from django.urls import reverse_lazy
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -14,34 +15,43 @@ class BooksApiTestCase(ApiStoreTestsMixin, APITestCase):
 
     def test_get(self):
         response = self.client.get(self.url)
-        serializer_data = BookSerializer(
-            [self.book1, self.book2,
-             self.book3, self.book4],
-            many=True).data
+        books = Book.objects.all().annotate(
+            annotated_likes=Count(Case(When(userbookrelation__like=True, then=1))),
+            rating=Avg('userbookrelation__rate')) \
+            .order_by('id')
+        serializer_data = BookSerializer(books, many=True).data
         self.assertEqual(status.HTTP_200_OK, response.status_code)
         self.assertEqual(serializer_data, response.data)
+        self.assertEqual(serializer_data[0]['rating'], '5.00')
+        self.assertEqual(serializer_data[0]['annotated_likes'], 1)
+        self.assertEqual(serializer_data[0]['likes_count'], 1)
 
     def test_get_search(self):
         response = self.client.get(self.url, data={'search': 'John'})
-        serializer_data = BookSerializer([
-            self.book1, self.book4
-        ], many=True).data
+        books = Book.objects.filter(id__in=[self.book1.id, self.book4.id]).annotate(
+            annotated_likes=Count(Case(When(userbookrelation__like=True, then=1))),
+            rating=Avg('userbookrelation__rate')) \
+            .order_by('id')
+        serializer_data = BookSerializer(books, many=True).data
         self.assertEqual(status.HTTP_200_OK, response.status_code)
         self.assertEqual(serializer_data, response.data)
 
     def test_get_filter(self):
         response = self.client.get(self.url, data={'price': '0.23'})
-        serializer_data = BookSerializer([self.book3],
-                                         many=True).data
+        books = Book.objects.filter(id__in=[self.book3.id]).annotate(
+            annotated_likes=Count(Case(When(userbookrelation__like=True, then=1))),
+            rating=Avg('userbookrelation__rate'))
+        serializer_data = BookSerializer(books, many=True).data
         self.assertEqual(status.HTTP_200_OK, response.status_code)
         self.assertEqual(serializer_data, response.data)
 
     def test_get_ordering(self):
         response = self.client.get(self.url, data={'ordering': 'price'})
-        serializer_data = BookSerializer([
-            self.book3, self.book2,
-            self.book1, self.book4
-        ], many=True).data
+        books = Book.objects.all().annotate(
+            annotated_likes=Count(Case(When(userbookrelation__like=True, then=1))),
+            rating=Avg('userbookrelation__rate')) \
+            .order_by('price')
+        serializer_data = BookSerializer(books, many=True).data
         self.assertEqual(status.HTTP_200_OK, response.status_code)
         self.assertEqual(serializer_data, response.data)
 
@@ -50,7 +60,10 @@ class BooksApiTestCase(ApiStoreTestsMixin, APITestCase):
         data = {
             "name": "Scooby Do 2",
             "price": "123.12",
-            "author": "Shaggy"
+            "author": "Shaggy",
+            "likes_count": 0,
+            "annotated_likes": 0,
+            "rating": None
         }
         json_data = json.dumps(data)
         self.client.force_login(self.test_user)
@@ -81,11 +94,12 @@ class BooksApiTestCase(ApiStoreTestsMixin, APITestCase):
     def test_get_detail(self):
         url = reverse_lazy('book-detail', args=(self.book1.id,))
         json_data = {
-            "id": self.book1.id,
             "name": self.book1.name,
             "price": self.book1.price,
             "author": self.book1.author,
-            "likes_count": 0
+            "likes_count": 1,
+            "annotated_likes": 1,
+            "rating": "5.00"
         }
         response = self.client.get(url)
         self.assertEqual(status.HTTP_200_OK, response.status_code)
@@ -97,7 +111,10 @@ class BooksApiTestCase(ApiStoreTestsMixin, APITestCase):
         data = {
             "name": self.book1.name,
             "price": 990000,
-            "author": self.book1.author
+            "author": self.book1.author,
+            "likes_count": 0,
+            "annotated_likes": 0,
+            "rating": None
         }
         json_data = json.dumps(data)
         self.client.force_login(self.test_user)
@@ -116,7 +133,10 @@ class BooksApiTestCase(ApiStoreTestsMixin, APITestCase):
         data = {
             "name": self.book1.name,
             "price": 990000,
-            "author": self.book1.author
+            "author": self.book1.author,
+            "likes_count": 0,
+            "annotated_likes": 0,
+            "rating": None
         }
         json_data = json.dumps(data)
         self.client.force_login(self.test_user2)
@@ -133,7 +153,10 @@ class BooksApiTestCase(ApiStoreTestsMixin, APITestCase):
         data = {
             "name": self.book1.name,
             "price": 990000,
-            "author": self.book1.author
+            "author": self.book1.author,
+            "likes_count": 0,
+            "annotated_likes": 0,
+            "rating": None
         }
         json_data = json.dumps(data)
         self.client.force_login(self.test_user3)
@@ -202,7 +225,7 @@ class BooksRelationTestCase(ApiStoreTestsMixin, APITestCase):
         self.assertTrue(2, relation.rate)
 
     def test_rate_wrong(self):
-        self.url = reverse_lazy('userbookrelation-detail', args=(self.book1.id,))
+        self.url = reverse_lazy('userbookrelation-detail', args=(self.book2.id,))
 
         data = {
             "rate": 111
@@ -215,7 +238,7 @@ class BooksRelationTestCase(ApiStoreTestsMixin, APITestCase):
         self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code,
                          response.data)
         relation = UserBookRelation.objects.get(user=self.test_user,
-                                                book=self.book1)
+                                                book=self.book2)
         self.assertEqual(None, relation.rate)
 
     def test_review(self):
