@@ -1,10 +1,12 @@
 import json
 from decimal import Decimal
 
+from django.db import connection
 from django.db.models import Count, Case, When, Avg, ExpressionWrapper, F, FloatField
 from django.urls import reverse_lazy
 from rest_framework import status
 from rest_framework.test import APITestCase
+from django.test.utils import CaptureQueriesContext
 
 from store.models import Book, UserBookRelation
 from store.serializers import BookSerializer
@@ -14,7 +16,11 @@ from .tests_mixins import ApiStoreTestsMixin
 class BooksApiTestCase(ApiStoreTestsMixin, APITestCase):
 
     def test_get(self):
-        response = self.client.get(self.url)
+
+        with CaptureQueriesContext(connection) as queries:
+            response = self.client.get(self.url)
+            self.assertEqual(2, len(queries))
+
         books = Book.objects.all().annotate(
             annotated_likes=Count(Case(When(userbookrelation__like=True, then=1))),
             rating=Avg('userbookrelation__rate'),
@@ -23,11 +29,11 @@ class BooksApiTestCase(ApiStoreTestsMixin, APITestCase):
                 output_field=FloatField())) \
             .order_by('id')
         serializer_data = BookSerializer(books, many=True).data
+
         self.assertEqual(status.HTTP_200_OK, response.status_code)
         self.assertEqual(serializer_data, response.data)
         self.assertEqual(serializer_data[0]['rating'], '5.00')
         self.assertEqual(serializer_data[0]['annotated_likes'], 1)
-        self.assertEqual(serializer_data[0]['likes_count'], 1)
         self.assertEqual(serializer_data[0]['price_with_discount'], '70.14')
 
     def test_get_search(self):
@@ -111,10 +117,16 @@ class BooksApiTestCase(ApiStoreTestsMixin, APITestCase):
             "name": self.book1.name,
             "price": self.book1.price,
             "author": self.book1.author,
-            "likes_count": 1,
             "annotated_likes": 1,
             "rating": "5.00",
-            "price_with_discount": '70.14'
+            "price_with_discount": '70.14',
+            "owner_name": 'test_username',
+            "readers": [
+                {
+                    'first_name': '',
+                    'last_name': ''
+                }
+            ]
         }
         response = self.client.get(url)
         self.assertEqual(status.HTTP_200_OK, response.status_code)

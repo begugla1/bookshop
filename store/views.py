@@ -18,6 +18,7 @@ class BookViewSet(ModelViewSet):
             price_with_discount=ExpressionWrapper(
                 F('price') - (F('price') * F('discount')),
                 output_field=FloatField())) \
+            .select_related('owner').prefetch_related('readers') \
             .order_by('id')
     serializer_class = BookSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]

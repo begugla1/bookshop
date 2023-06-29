@@ -9,12 +9,13 @@ from store.serializers import BookSerializer
 class BookSerializerTestCase(TestCase):
 
     def test_ok(self):
-        user1 = User.objects.create(username='test_username1')
+        user1 = User.objects.create(username='test_username1',
+                                    first_name='Igor', last_name='Pampa')
         user2 = User.objects.create(username='test_username2')
         user3 = User.objects.create(username='test_username3')
 
         book1 = Book.objects.create(name='Testbook1', price='111.34',
-                                    discount=0)
+                                    owner=user1)
         book2 = Book.objects.create(name='Testbook2', price='111.000',
                                     discount=0.5)
 
@@ -46,20 +47,47 @@ class BookSerializerTestCase(TestCase):
                 'name': book1.name,
                 'price': '111.34',
                 'author': 'Unknown',
-                'likes_count': 2,
                 'annotated_likes': 2,
                 'rating': '4.67',
-                'price_with_discount': '111.34'
-
+                'price_with_discount': '111.34',
+                'owner_name': 'test_username1',
+                'readers': [
+                    {
+                        'first_name': 'Igor',
+                        'last_name': 'Pampa'
+                    },
+                    {
+                        'first_name': '',
+                        'last_name': ''
+                    },
+                    {
+                        'first_name': '',
+                        'last_name': ''
+                    }
+                ]
             },
             {
                 'name': book2.name,
                 'price': '111.00',
                 'author': 'Unknown',
-                'likes_count': 1,
                 'annotated_likes': 1,
                 'rating': '3.50',
-                'price_with_discount': '55.50'
+                'price_with_discount': '55.50',
+                'owner_name': '',
+                'readers': [
+                    {
+                        'first_name': 'Igor',
+                        'last_name': 'Pampa'
+                    },
+                    {
+                        'first_name': '',
+                        'last_name': ''
+                    },
+                    {
+                        'first_name': '',
+                        'last_name': ''
+                    }
+                ]
             },
         ]
         self.assertEqual(expected_data, data)

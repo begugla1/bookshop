@@ -38,8 +38,8 @@ class UserBookRelation(models.Model):
     like = models.BooleanField('Like', default=False)
     in_bookmarks = models.BooleanField('In bookmarks', default=False)
     rate = models.PositiveSmallIntegerField('Rate', choices=RATE_CHOICES,
-                                            null=True)
-    review = models.TextField('Review', null=True)
+                                            null=True, blank=True)
+    review = models.TextField('Review', null=True, blank=True)
 
     def __str__(self):
         return f'Relation of {self.user} to {self.book}'
