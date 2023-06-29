@@ -1,5 +1,5 @@
 from django.contrib.auth.models import User
-from django.db.models import Count, Case, When, Avg, F, ExpressionWrapper, FloatField
+from django.db.models import Count, Case, When, Avg, F, ExpressionWrapper, FloatField, Prefetch
 from django_filters.compat import TestCase
 
 from store.models import Book, UserBookRelation
@@ -40,7 +40,9 @@ class BookSerializerTestCase(TestCase):
                           F('price') - (F('price') * F('discount')),
                           output_field=FloatField()),
                       owner_name=F('owner__username')) \
-            .prefetch_related('readers') \
+            .prefetch_related(Prefetch('readers',
+                                       queryset=User.objects.all() \
+                                       .only('first_name', 'last_name'))) \
             .order_by('id')
 
         data = BookSerializer(books, many=True).data

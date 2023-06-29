@@ -1,8 +1,9 @@
 import json
 from decimal import Decimal
 
+from django.contrib.auth.models import User
 from django.db import connection
-from django.db.models import Count, Case, When, Avg, ExpressionWrapper, F, FloatField
+from django.db.models import Count, Case, When, Avg, ExpressionWrapper, F, FloatField, Prefetch
 from django.urls import reverse_lazy
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -27,7 +28,9 @@ class BooksApiTestCase(ApiStoreTestsMixin, APITestCase):
                 F('price') - (F('price') * F('discount')),
                 output_field=FloatField()),
             owner_name=F('owner__username')) \
-            .prefetch_related('readers') \
+            .prefetch_related(Prefetch('readers',
+                                       queryset=User.objects.all() \
+                                       .only('first_name', 'last_name'))) \
             .order_by('id')
         serializer_data = BookSerializer(books, many=True).data
 
@@ -46,7 +49,9 @@ class BooksApiTestCase(ApiStoreTestsMixin, APITestCase):
                 F('price') - (F('price') * F('discount')),
                 output_field=FloatField()),
             owner_name=F('owner__username')) \
-            .prefetch_related('readers') \
+            .prefetch_related(Prefetch('readers',
+                                       queryset=User.objects.all() \
+                                       .only('first_name', 'last_name'))) \
             .order_by('id')
         serializer_data = BookSerializer(books, many=True).data
         self.assertEqual(status.HTTP_200_OK, response.status_code)
@@ -61,7 +66,9 @@ class BooksApiTestCase(ApiStoreTestsMixin, APITestCase):
                 F('price') - (F('price') * F('discount')),
                 output_field=FloatField()),
             owner_name=F('owner__username')) \
-            .prefetch_related('readers') \
+            .prefetch_related(Prefetch('readers',
+                                       queryset=User.objects.all() \
+                                       .only('first_name', 'last_name'))) \
             .order_by('id')
         serializer_data = BookSerializer(books, many=True).data
         self.assertEqual(status.HTTP_200_OK, response.status_code)
@@ -76,7 +83,9 @@ class BooksApiTestCase(ApiStoreTestsMixin, APITestCase):
                 F('price') - (F('price') * F('discount')),
                 output_field=FloatField()),
             owner_name=F('owner__username')) \
-            .prefetch_related('readers') \
+            .prefetch_related(Prefetch('readers',
+                                       queryset=User.objects.all() \
+                                       .only('first_name', 'last_name'))) \
             .order_by('price')
         serializer_data = BookSerializer(books, many=True).data
         self.assertEqual(status.HTTP_200_OK, response.status_code)

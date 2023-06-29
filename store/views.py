@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from django.db.models import Count, When, Case, Avg, ExpressionWrapper, F, FloatField, Prefetch
 from django.views.generic import TemplateView
 from django_filters.rest_framework import DjangoFilterBackend
@@ -12,14 +13,17 @@ from store.serializers import BookSerializer, UserBookRelationSerializer
 
 
 class BookViewSet(ModelViewSet):
-    queryset = Book.objects.all() \
-        .annotate(annotated_likes=Count(Case(When(userbookrelation__like=True, then=1))),
-                  rating=Avg('userbookrelation__rate'),
-                  price_with_discount=ExpressionWrapper(
-                     F('price') - (F('price') * F('discount')),
-                     output_field=FloatField()),
-                  owner_name=F('owner__username')) \
-        .prefetch_related('readers') \
+    queryset = Book.objects.all().annotate(
+        annotated_likes=
+        Count(Case(When(userbookrelation__like=True, then=1))),
+        rating=Avg('userbookrelation__rate'),
+        price_with_discount=ExpressionWrapper(
+            F('price') - (F('price') * F('discount')),
+            output_field=FloatField()),
+        owner_name=F('owner__username')) \
+        .prefetch_related(Prefetch('readers',
+                                   queryset=User.objects.all() \
+                                   .only('first_name', 'last_name'))) \
         .order_by('id')
 
     serializer_class = BookSerializer
