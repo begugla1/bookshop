@@ -1,8 +1,7 @@
-from django.contrib.auth.models import User
-from django.db import models
 from decimal import Decimal
 
-from django.db.models import Model
+from django.contrib.auth.models import User
+from django.db import models
 
 from store.validators import discount_validator
 
