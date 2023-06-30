@@ -1,22 +1,27 @@
-from unittest import TestCase
+from django.contrib.auth.models import User
+from django.test import TestCase
 
-from store.logic import operations
+from store.logic import set_rating
+from store.models import UserBookRelation, Book
 
 
-class LogicTestCase(TestCase):
+class SetRatingTestCase(TestCase):
+    def setUp(self):
+        user1 = User.objects.create(username='test_username1',
+                                    first_name='Igor', last_name='Pampa')
+        user2 = User.objects.create(username='test_username2')
+        user3 = User.objects.create(username='test_username3')
 
-    def test_plus(self):
-        result = operations(6, 13, '+')
-        self.assertEqual(19, result)
+        self.book1 = Book.objects.create(name='Testbook1', price='111.34',
+                                         owner=user1)
+        UserBookRelation.objects.create(user=user1, book=self.book1,
+                                        like=True, rate=5)
+        UserBookRelation.objects.create(user=user2, book=self.book1,
+                                        in_bookmarks=True, rate=5)
+        self.user_book_3 = UserBookRelation.objects.create(user=user3, book=self.book1,
+                                                           like=True, rate=4)
 
-    def test_minus(self):
-        result = operations(6, 13, '-')
-        self.assertEqual(-7, result)
-
-    def test_multiply(self):
-        result = operations(6, 13, '*')
-        self.assertEqual(78, result)
-
-    def test_division(self):
-        result = operations(6, 13, '/')
-        self.assertEqual(6/13, result)
+    def test_ok(self):
+        set_rating(self.book1)
+        self.book1.refresh_from_db()
+        self.assertEqual('4.67', str(self.book1.rating))

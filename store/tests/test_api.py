@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from django.contrib.auth.models import User
 from django.db import connection
-from django.db.models import Count, Case, When, Avg, ExpressionWrapper, F, FloatField, Prefetch
+from django.db.models import Count, Case, When, ExpressionWrapper, F, FloatField, Prefetch
 from django.urls import reverse_lazy
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -23,7 +23,6 @@ class BooksApiTestCase(ApiStoreTestsMixin, APITestCase):
 
         books = Book.objects.all().annotate(
             annotated_likes=Count(Case(When(userbookrelation__like=True, then=1))),
-            rating=Avg('userbookrelation__rate'),
             price_with_discount=ExpressionWrapper(F('price') - (F('price') * F('discount')),
                                                   output_field=FloatField()),
             owner_name=F('owner__username')).prefetch_related(
@@ -42,7 +41,6 @@ class BooksApiTestCase(ApiStoreTestsMixin, APITestCase):
         response = self.client.get(self.url, data={'search': 'John'})
         books = Book.objects.filter(id__in=[self.book1.id, self.book4.id]).annotate(
             annotated_likes=Count(Case(When(userbookrelation__like=True, then=1))),
-            rating=Avg('userbookrelation__rate'),
             price_with_discount=ExpressionWrapper(F('price') - (F('price') * F('discount')),
                                                   output_field=FloatField()),
             owner_name=F('owner__username')).prefetch_related(
@@ -57,7 +55,6 @@ class BooksApiTestCase(ApiStoreTestsMixin, APITestCase):
         response = self.client.get(self.url, data={'price': '0.23'})
         books = Book.objects.filter(id__in=[self.book3.id]).annotate(
             annotated_likes=Count(Case(When(userbookrelation__like=True, then=1))),
-            rating=Avg('userbookrelation__rate'),
             price_with_discount=ExpressionWrapper(F('price') - (F('price') * F('discount')),
                                                   output_field=FloatField()),
             owner_name=F('owner__username')).prefetch_related(
@@ -72,7 +69,6 @@ class BooksApiTestCase(ApiStoreTestsMixin, APITestCase):
         response = self.client.get(self.url, data={'ordering': 'price'})
         books = Book.objects.all().annotate(
             annotated_likes=Count(Case(When(userbookrelation__like=True, then=1))),
-            rating=Avg('userbookrelation__rate'),
             price_with_discount=ExpressionWrapper(F('price') - (F('price') * F('discount')),
                                                   output_field=FloatField()),
             owner_name=F('owner__username')).prefetch_related(

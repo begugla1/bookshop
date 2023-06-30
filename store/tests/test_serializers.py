@@ -1,5 +1,5 @@
 from django.contrib.auth.models import User
-from django.db.models import Count, Case, When, Avg, F, ExpressionWrapper, FloatField, Prefetch
+from django.db.models import Count, Case, When, F, ExpressionWrapper, FloatField, Prefetch
 from django_filters.compat import TestCase
 
 from store.models import Book, UserBookRelation
@@ -9,33 +9,35 @@ from store.serializers import BookSerializer
 class BookSerializerTestCase(TestCase):
 
     def test_ok(self):
-        user1 = User.objects.create(username='test_username1',
-                                    first_name='Igor', last_name='Pampa')
-        user2 = User.objects.create(username='test_username2')
-        user3 = User.objects.create(username='test_username3')
+        self.user1 = User.objects.create(username='test_username1',
+                                         first_name='Igor', last_name='Pampa')
+        self.user2 = User.objects.create(username='test_username2')
+        self.user3 = User.objects.create(username='test_username3')
 
-        book1 = Book.objects.create(name='Testbook1', price='111.34',
-                                    owner=user1)
-        book2 = Book.objects.create(name='Testbook2', price='111.000',
-                                    discount=0.5)
+        self.book1 = Book.objects.create(name='Testbook1', price='111.34',
+                                         owner=self.user1)
+        self.book2 = Book.objects.create(name='Testbook2', price='111.000',
+                                         discount=0.5)
 
-        UserBookRelation.objects.create(user=user1, book=book1,
+        UserBookRelation.objects.create(user=self.user1, book=self.book1,
                                         like=True, rate=5)
-        UserBookRelation.objects.create(user=user2, book=book1,
+        UserBookRelation.objects.create(user=self.user2, book=self.book1,
                                         in_bookmarks=True, rate=5)
-        UserBookRelation.objects.create(user=user3, book=book1,
-                                        like=True, rate=4)
+        user_book_relation_3 = UserBookRelation.objects.create(user=self.user3, book=self.book1,
+                                                               like=True)
+        user_book_relation_3.rate = 4
+        user_book_relation_3.save()
+        self.book1.refresh_from_db()
 
-        UserBookRelation.objects.create(user=user1, book=book2,
+        UserBookRelation.objects.create(user=self.user1, book=self.book2,
                                         like=False, rate=4)
-        UserBookRelation.objects.create(user=user2, book=book2,
+        UserBookRelation.objects.create(user=self.user2, book=self.book2,
                                         like=False, rate=3)
-        UserBookRelation.objects.create(user=user3, book=book2,
+        UserBookRelation.objects.create(user=self.user3, book=self.book2,
                                         like=True)
 
         books = Book.objects.all().annotate(
             annotated_likes=Count(Case(When(userbookrelation__like=True, then=1))),
-            rating=Avg('userbookrelation__rate'),
             price_with_discount=ExpressionWrapper(F('price') - (F('price') * F('discount')),
                                                   output_field=FloatField()),
             owner_name=F('owner__username')).prefetch_related(
@@ -46,7 +48,7 @@ class BookSerializerTestCase(TestCase):
 
         expected_data = [
             {
-                'name': book1.name,
+                'name': self.book1.name,
                 'price': '111.34',
                 'author': 'Unknown',
                 'annotated_likes': 2,
@@ -69,7 +71,7 @@ class BookSerializerTestCase(TestCase):
                 ]
             },
             {
-                'name': book2.name,
+                'name': self.book2.name,
                 'price': '111.00',
                 'author': 'Unknown',
                 'annotated_likes': 1,
