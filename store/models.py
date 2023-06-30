@@ -2,6 +2,8 @@ from django.contrib.auth.models import User
 from django.db import models
 from decimal import Decimal
 
+from django.db.models import Model
+
 from store.validators import discount_validator
 
 
@@ -29,6 +31,11 @@ class Book(models.Model):
 
 
 class UserBookRelation(models.Model):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.old_rate = self.rate
+
     RATE_CHOICES = (
         (1, 'Bad'),
         (2, 'Ok'),
@@ -44,7 +51,7 @@ class UserBookRelation(models.Model):
     like = models.BooleanField('Like', default=False)
     in_bookmarks = models.BooleanField('In bookmarks', default=False)
     rate = models.PositiveSmallIntegerField('Rate', choices=RATE_CHOICES,
-                                            null=True)
+                                            null=True, default=None)
     review = models.TextField('Review', null=True, blank=True)
 
     def __str__(self):
@@ -54,11 +61,11 @@ class UserBookRelation(models.Model):
         from store.logic import set_rating
 
         creating = not self.pk
-        old_rating = self.rate
 
         super().save(*args, **kwargs)
 
         new_rating = self.rate
-        if old_rating != new_rating or creating:
+
+        if self.old_rate != new_rating or creating:
             set_rating(self.book)
 

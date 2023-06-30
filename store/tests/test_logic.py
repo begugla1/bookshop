@@ -25,3 +25,9 @@ class SetRatingTestCase(TestCase):
         set_rating(self.book1)
         self.book1.refresh_from_db()
         self.assertEqual('4.67', str(self.book1.rating))
+
+    def test_save(self):
+        self.user_book_3.rate = 5
+        self.user_book_3.save()
+        self.book1.refresh_from_db()
+        self.assertEqual('5.00', str(self.book1.rating))
