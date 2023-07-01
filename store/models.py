@@ -63,9 +63,10 @@ class UserBookRelation(models.Model):
 
         super().save(*args, **kwargs)
 
-        new_rating = self.rate
+        new_rate = self.rate
 
-        if self.old_rate != new_rating or creating:
+        if self.old_rate != new_rate or creating:
             set_rating(self.book)
+            self.old_rate = new_rate
             return 'cached_field_was_used'
 
