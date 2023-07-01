@@ -1,5 +1,5 @@
 from django.contrib.auth.models import User
-from django.db.models import Count, When, Case, Avg, ExpressionWrapper, F, FloatField, Prefetch
+from django.db.models import Count, When, Case, ExpressionWrapper, F, FloatField, Prefetch
 from django.views.generic import TemplateView
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
@@ -47,3 +47,4 @@ class UserBookRelationView(UpdateModelMixin, GenericViewSet):
 
 class Auth(TemplateView):
     template_name = 'oauth.html'
+    
