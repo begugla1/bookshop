@@ -23,7 +23,7 @@ class Book(models.Model):
                                    validators=[discount_validator])
     rating = models.DecimalField('Rating', max_digits=3,
                                  decimal_places=2, null=True,
-                                 default=None)
+                                 default=None, blank=True)
 
     def __str__(self):
         return self.name
