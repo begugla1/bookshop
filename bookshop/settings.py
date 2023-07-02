@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-z4qx#)5g4k%e8=4s=u9vaccej$^0%8u=@)#&^2ggp_omox@--=
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['45.131.41.78',]
 
 INTERNAL_IPS = [
     "127.0.0.1",
@@ -88,7 +88,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'books_db',
         'USER': 'books_user',
-        'PASSWORD': '',
+        'PASSWORD': 'books_password',
         'HOST': 'localhost',
         'PORT': '',
     }
@@ -130,6 +130,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = 'static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
