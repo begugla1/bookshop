@@ -29,9 +29,9 @@ class SetRatingTestCase(TestCase):
     def test_save(self):
         self.user_book_3.rate = 5
         result = self.user_book_3.save()
-        self.assertEqual('cached_field_was_used', result)
+        self.book1.refresh_from_db()
+        self.assertEqual('5.00', str(self.book1.rating))
+        self.assertEqual('cached_field_was_not_used', result)
         self.user_book_3.rate = 5
         result = self.user_book_3.save()
         self.assertEqual(None, result)
-        self.book1.refresh_from_db()
-        self.assertEqual('5.00', str(self.book1.rating))

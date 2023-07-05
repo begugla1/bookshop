@@ -68,5 +68,4 @@ class UserBookRelation(models.Model):
         if self.old_rate != new_rate or creating:
             set_rating(self.book)
             self.old_rate = new_rate
-            return 'cached_field_was_used'
-
+            return 'cached_field_was_not_used'
