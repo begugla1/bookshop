@@ -1,15 +1,27 @@
 from django.contrib.auth.models import User
-from django.db.models import Count, When, Case, ExpressionWrapper, F, FloatField, Prefetch
+from django.db.models import (Count,
+                              When,
+                              Case,
+                              ExpressionWrapper,
+                              F,
+                              FloatField,
+                              Prefetch)
 from django.views.generic import TemplateView
+
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.filters import SearchFilter, OrderingFilter
+
+from rest_framework.filters import (SearchFilter,
+                                    OrderingFilter)
 from rest_framework.mixins import UpdateModelMixin
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.viewsets import ModelViewSet, GenericViewSet
+from rest_framework.viewsets import (ModelViewSet,
+                                     GenericViewSet)
 
-from store.models import Book, UserBookRelation
+from store.models import (Book,
+                          UserBookRelation)
 from store.permissons import IsOwnerOrStaffOrReadOnly
-from store.serializers import BookSerializer, UserBookRelationSerializer
+from store.serializers import (BookSerializer,
+                               UserBookRelationSerializer)
 
 
 class BookViewSet(ModelViewSet):
@@ -47,4 +59,3 @@ class UserBookRelationView(UpdateModelMixin, GenericViewSet):
 
 class Auth(TemplateView):
     template_name = 'oauth.html'
-    

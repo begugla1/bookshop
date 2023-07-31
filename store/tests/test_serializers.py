@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from django.db.models import Count, Case, When, F, ExpressionWrapper, FloatField, Prefetch
-from django_filters.compat import TestCase
+from django.test.utils import TestCase
 
 from store.models import Book, UserBookRelation
 from store.serializers import BookSerializer
